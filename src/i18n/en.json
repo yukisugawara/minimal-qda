@@ -1,0 +1,167 @@
+{
+  "app": {
+    "title": "minimalQDA"
+  },
+  "header": {
+    "loadFile": "Import",
+    "save": "Save",
+    "export": "Export",
+    "map": "Map",
+    "mindmap": "Code Map",
+    "categorymap": "Category Map",
+    "memomap": "Memo Map",
+    "language": "Language",
+    "importTooltip": "Supported: .txt .md .xml .pdf .png .jpg .docx .mqda",
+    "saveTooltip": "Save project as .mqda file",
+    "exportTooltip": "Export current file as HTML",
+    "mapTooltip": "Code Map / Category Map / Memo Map",
+    "csv": "CSV",
+    "csvTooltip": "Export codes as CSV (Text, Code, Color, Memo)",
+    "resetLayout": "Reset",
+    "resetLayoutTooltip": "Reset layout to default"
+  },
+  "layout": {
+    "dragToReorder": "Drag to reorder panes"
+  },
+  "panel": {
+    "files": "Files",
+    "codes": "Codes",
+    "viewer": "Viewer",
+    "memos": "Memos"
+  },
+  "leftPane": {
+    "files": "Files",
+    "noFiles": "No files loaded...",
+    "codes": "Codes",
+    "addGroup": "Add Group",
+    "groupName": "New Group",
+    "noItems": "No codes yet. Highlight text to create codes.",
+    "changeColor": "Change color",
+    "collapsePane": "Collapse left panel",
+    "expandPane": "Expand left panel"
+  },
+  "centerPane": {
+    "placeholder": "Load a file to start analysis.",
+    "markerColors": "Marker Colors",
+    "inVivo": "Code in vivo",
+    "interpretive": "Code with a new code"
+  },
+  "codeNameDialog": {
+    "title": "Enter code name",
+    "context": "Selected text",
+    "placeholder": "Code name...",
+    "ok": "OK",
+    "cancel": "Cancel"
+  },
+  "rightPane": {
+    "memos": "Memos",
+    "noMemos": "No memos yet. Select a code to add memos.",
+    "addMemo": "Add Memo",
+    "changeColor": "Change color",
+    "save": "Save",
+    "cancel": "Cancel",
+    "edit": "Edit",
+    "delete": "Delete",
+    "collapsePane": "Collapse right panel",
+    "expandPane": "Expand right panel"
+  },
+  "linkLabelDialog": {
+    "createTitle": "Add Link Label",
+    "editTitle": "Edit Link Label",
+    "placeholder": "Label (optional)...",
+    "ok": "OK",
+    "cancel": "Cancel",
+    "delete": "Delete Link"
+  },
+  "mindmap": {
+    "title": "Code Map",
+    "close": "Close",
+    "exportImage": "Export as PNG",
+    "noData": "Create codes first to visualize the mind map.",
+    "uncategorized": "Uncategorized",
+    "theoryPlaceholder": "Click to write your theory..."
+  },
+  "categorymap": {
+    "title": "Category Map",
+    "close": "Close",
+    "exportImage": "Export as PNG",
+    "noData": "Create categories first to visualize the category map.",
+    "childCodes": "Child Codes"
+  },
+  "memomap": {
+    "title": "Memo Map",
+    "close": "Close",
+    "exportImage": "Export as PNG",
+    "noData": "Create memos first to visualize the memo map.",
+    "unassigned": "Unassigned"
+  },
+  "usage": {
+    "title": "How to Use",
+    "headerButtons": "Header Buttons",
+    "btnImport": "Load a file into the project",
+    "btnSaveLabel": "Save",
+    "btnSave": "Save the project as a .mqda file",
+    "btnExportLabel": "Export",
+    "btnExport": "Export codes as a CSV file",
+    "btnMap": "Open Code Map / Category Map / Memo Map",
+    "btnTheme": "Toggle dark / light mode",
+    "btnLang": "Switch language (EN / JA)",
+    "panels": "Panel Layout",
+    "panelFiles": "Files",
+    "panelFilesDesc": "List of loaded files. Click to switch the active file",
+    "panelCodes": "Codes",
+    "panelCodesDesc": "Hierarchical code tree. Drag & drop to reorganize",
+    "panelViewer": "Viewer",
+    "panelViewerDesc": "Main view for reading files and coding text",
+    "panelMemos": "Memos",
+    "panelMemosDesc": "Manage and edit memos linked to codes",
+    "coding": "Coding Methods",
+    "codingDesc": "Select text in the Viewer to choose between two coding modes:",
+    "codingInVivo": "In Vivo",
+    "codingInVivoDesc": "The selected text becomes the code name automatically",
+    "codingInterpretive": "Interpretive",
+    "codingInterpretiveDesc": "Enter a custom code name of your choice",
+    "formats": "Supported File Formats",
+    "formatImport": "Import:",
+    "formatExport": "Export:",
+    "saveResume": "Save & Resume",
+    "saveResumeDesc": "To pause your work, click Save to download a .mqda file. Next time, import the .mqda file via the Import button to restore all files, codes, and memos and resume where you left off."
+  },
+  "guide": {
+    "title": "Qualitative Analysis Workflow",
+    "goal": "The goal of qualitative analysis is to discover theory from data. Through the steps below, you progressively elevate concrete text into abstract theory.",
+    "memoTitle": "The Role of Memos",
+    "memoDesc": "Writing memos at every step is essential. Recording background context, insights, and reasoning behind your codes enriches the analysis and strengthens its depth.",
+    "hint": "Code in Viewer → Organize codes, groups & categories → Analyze relations in Maps",
+    "steps": {
+      "coding": {
+        "title": "Coding",
+        "desc": "Assign codes to text segments"
+      },
+      "organise": {
+        "title": "Organize Codes",
+        "desc": "Merge and consolidate similar codes"
+      },
+      "group": {
+        "title": "Grouping",
+        "desc": "Arrange codes into groups"
+      },
+      "categorise": {
+        "title": "Categorization",
+        "desc": "Elevate groups into categories"
+      },
+      "refineCategories": {
+        "title": "Refine Categories",
+        "desc": "Refine and sharpen categories"
+      },
+      "relational": {
+        "title": "Relational Analysis",
+        "desc": "Map relationships between categories"
+      },
+      "theory": {
+        "title": "Theory Discovery",
+        "desc": "Synthesize an integrative theory"
+      }
+    }
+  }
+}

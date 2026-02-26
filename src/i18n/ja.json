@@ -1,0 +1,167 @@
+{
+  "app": {
+    "title": "minimalQDA"
+  },
+  "header": {
+    "loadFile": "Import",
+    "save": "保存",
+    "export": "エクスポート",
+    "map": "Map",
+    "mindmap": "コードマップ",
+    "categorymap": "カテゴリマップ",
+    "memomap": "メモマップ",
+    "language": "言語",
+    "importTooltip": "対応形式: .txt .md .xml .pdf .png .jpg .docx .mqda",
+    "saveTooltip": "プロジェクトを.mqdaファイルとして保存",
+    "exportTooltip": "現在のファイルをHTMLとしてエクスポート",
+    "mapTooltip": "コードマップ / カテゴリマップ / メモマップ",
+    "csv": "CSV",
+    "csvTooltip": "コードをCSV出力（テキスト, コード, 色, メモ）",
+    "resetLayout": "リセット",
+    "resetLayoutTooltip": "レイアウトをデフォルトに戻す"
+  },
+  "layout": {
+    "dragToReorder": "ドラッグしてパネルを並べ替え"
+  },
+  "panel": {
+    "files": "ファイル",
+    "codes": "コード",
+    "viewer": "ビューア",
+    "memos": "メモ"
+  },
+  "leftPane": {
+    "files": "ファイル",
+    "noFiles": "ファイルがありません...",
+    "codes": "コード",
+    "addGroup": "グループ追加",
+    "groupName": "新規グループ",
+    "noItems": "コードがありません。テキストを選択してコードを作成してください。",
+    "changeColor": "色を変更",
+    "collapsePane": "左パネルを閉じる",
+    "expandPane": "左パネルを開く"
+  },
+  "centerPane": {
+    "placeholder": "ファイルを読み込んで分析を開始してください。",
+    "markerColors": "マーカー色",
+    "inVivo": "記述",
+    "interpretive": "解釈"
+  },
+  "codeNameDialog": {
+    "title": "コード名を入力",
+    "context": "選択テキスト",
+    "placeholder": "コード名...",
+    "ok": "OK",
+    "cancel": "キャンセル"
+  },
+  "rightPane": {
+    "memos": "メモ",
+    "noMemos": "メモがありません。コードを選択してメモを追加してください。",
+    "addMemo": "メモを追加",
+    "changeColor": "色を変更",
+    "save": "保存",
+    "cancel": "キャンセル",
+    "edit": "編集",
+    "delete": "削除",
+    "collapsePane": "右パネルを閉じる",
+    "expandPane": "右パネルを開く"
+  },
+  "linkLabelDialog": {
+    "createTitle": "リンクラベルを追加",
+    "editTitle": "リンクラベルを編集",
+    "placeholder": "ラベル（任意）...",
+    "ok": "OK",
+    "cancel": "キャンセル",
+    "delete": "リンクを削除"
+  },
+  "mindmap": {
+    "title": "コードマップ",
+    "close": "閉じる",
+    "exportImage": "PNG画像で出力",
+    "noData": "マインドマップを表示するには、まずコードを作成してください。",
+    "uncategorized": "未分類",
+    "theoryPlaceholder": "クリックして理論を記入..."
+  },
+  "categorymap": {
+    "title": "カテゴリマップ",
+    "close": "閉じる",
+    "exportImage": "PNG画像で出力",
+    "noData": "カテゴリマップを表示するには、まずカテゴリを作成してください。",
+    "childCodes": "子コード"
+  },
+  "memomap": {
+    "title": "メモマップ",
+    "close": "閉じる",
+    "exportImage": "PNG画像で出力",
+    "noData": "メモマップを表示するには、まずメモを作成してください。",
+    "unassigned": "未割当"
+  },
+  "usage": {
+    "title": "使い方ガイド",
+    "headerButtons": "ヘッダーボタン",
+    "btnImport": "ファイルを読み込む",
+    "btnSaveLabel": "保存",
+    "btnSave": "プロジェクトを .mqda ファイルとして保存",
+    "btnExportLabel": "エクスポート",
+    "btnExport": "コードを CSV ファイルとして出力",
+    "btnMap": "コードマップ / カテゴリマップ / メモマップを表示",
+    "btnTheme": "ダーク / ライトモード切替",
+    "btnLang": "言語切替（日本語 / 英語）",
+    "panels": "パネル構成",
+    "panelFiles": "ファイル",
+    "panelFilesDesc": "読み込んだファイルの一覧。クリックで表示切替",
+    "panelCodes": "コード",
+    "panelCodesDesc": "コードをツリー表示。ドラッグ&ドロップで階層整理",
+    "panelViewer": "ビューア",
+    "panelViewerDesc": "ファイルの表示・コーディングを行うメイン画面",
+    "panelMemos": "メモ",
+    "panelMemosDesc": "コードに紐づくメモの管理・編集",
+    "coding": "コーディング方法",
+    "codingDesc": "ビューアでテキストを選択すると、2つのモードが選べます:",
+    "codingInVivo": "記述（In Vivo）",
+    "codingInVivoDesc": "選択したテキストがそのままコード名になる",
+    "codingInterpretive": "解釈（Interpretive）",
+    "codingInterpretiveDesc": "コード名を自分で入力する",
+    "formats": "対応ファイル形式",
+    "formatImport": "読み込み:",
+    "formatExport": "出力:",
+    "saveResume": "作業の保存と再開",
+    "saveResumeDesc": "作業を中断するときは「保存」ボタンで .mqda ファイルをダウンロードしてください。次回 Import から .mqda ファイルを読み込めば、すべてのファイル・コード・メモが復元され、作業を再開できます。"
+  },
+  "guide": {
+    "title": "質的分析の流れ",
+    "goal": "質的分析の目的は、データから理論を発見することです。以下のステップを通じて、具体的なテキストから抽象的な理論へと昇華させていきます。",
+    "memoTitle": "メモの役割",
+    "memoDesc": "各ステップでメモを書き残すことが重要です。コーディング時の背景情報や気づき、解釈の根拠などを記録することで、分析がより豊かで説得力のあるものになります。",
+    "hint": "ビューアでコーディング → コード・グループ・カテゴリで整理 → マップで関係性を分析",
+    "steps": {
+      "coding": {
+        "title": "コーディング",
+        "desc": "テキストにコードをふる"
+      },
+      "organise": {
+        "title": "コード整理",
+        "desc": "類似コードをまとめる"
+      },
+      "group": {
+        "title": "グループ化",
+        "desc": "コードをグループにまとめる"
+      },
+      "categorise": {
+        "title": "カテゴリー化",
+        "desc": "グループをカテゴリーに昇華する"
+      },
+      "refineCategories": {
+        "title": "カテゴリー整理",
+        "desc": "カテゴリーを精緻化する"
+      },
+      "relational": {
+        "title": "関係性分析",
+        "desc": "カテゴリー間の関係を整理する"
+      },
+      "theory": {
+        "title": "理論発見",
+        "desc": "すべてを統合する理論を見出す"
+      }
+    }
+  }
+}

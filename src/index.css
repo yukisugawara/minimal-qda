@@ -1,0 +1,116 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap');
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-sans: 'Nunito', ui-sans-serif, system-ui, sans-serif;
+
+  /* Light mode: warm cream palette */
+  --color-cream-50: #FFFDF7;
+  --color-cream-100: #FFF9EB;
+  --color-cream-200: #FFF3D6;
+  --color-cream-300: #FFECC0;
+
+  /* Purple accent */
+  --color-violet-50: #F5F0FF;
+  --color-violet-100: #EDE5FF;
+  --color-violet-200: #DDD0FE;
+  --color-violet-300: #C4B0FC;
+  --color-violet-400: #A78BFA;
+  --color-violet-500: #8B5CF6;
+  --color-violet-600: #7C3AED;
+  --color-violet-700: #6D28D9;
+
+  /* Pink accent */
+  --color-rose-300: #FDA4AF;
+  --color-rose-400: #FB7185;
+  --color-rose-500: #F43F5E;
+
+  /* Dark mode: deep purple palette */
+  --color-dpurple-800: #1E1336;
+  --color-dpurple-900: #150E28;
+  --color-dpurple-950: #0D0919;
+}
+
+/* Keyframe animations */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes scale-in {
+  from { opacity: 0; transform: scale(0.95); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+/* Animation utilities */
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out both;
+}
+
+.animate-slide-up {
+  animation: slide-up 0.35s ease-out both;
+}
+
+.animate-scale-in {
+  animation: scale-in 0.25s ease-out both;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  font-family: 'Nunito', ui-sans-serif, system-ui, sans-serif;
+  @apply bg-cream-50 text-gray-800;
+}
+
+:where(.dark) body,
+body:where(.dark) {
+  @apply bg-dpurple-950 text-gray-100;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(139, 92, 246, 0.25);
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(139, 92, 246, 0.45);
+}
+
+:where(.dark) ::-webkit-scrollbar-thumb {
+  background: rgba(196, 176, 252, 0.2);
+}
+
+:where(.dark) ::-webkit-scrollbar-thumb:hover {
+  background: rgba(196, 176, 252, 0.4);
+}
+
+/* Glass utility */
+.glass {
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+:where(.dark) .glass {
+  background: rgba(30, 19, 54, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
