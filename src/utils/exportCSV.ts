@@ -1,5 +1,31 @@
 import type { Code, Memo, FileEntry } from '../store/useAppStore';
 
+const COLOR_NAMES: Record<string, string> = {
+  '#E57373': 'Red',
+  '#F06292': 'Pink',
+  '#BA68C8': 'Purple',
+  '#9575CD': 'Deep Purple',
+  '#7986CB': 'Indigo',
+  '#64B5F6': 'Blue',
+  '#4FC3F7': 'Light Blue',
+  '#4DD0E1': 'Cyan',
+  '#4DB6AC': 'Teal',
+  '#81C784': 'Green',
+  '#DCE775': 'Lime',
+  '#FFF176': 'Yellow',
+  '#FFD54F': 'Amber',
+  '#FFB74D': 'Orange',
+  '#FF8A65': 'Deep Orange',
+  '#A1887F': 'Brown',
+  '#E0E0E0': 'Grey',
+  '#90A4AE': 'Blue Grey',
+  '#9CA3AF': 'Grey',  // group default color
+};
+
+function colorName(hex: string): string {
+  return COLOR_NAMES[hex.toUpperCase()] ?? COLOR_NAMES[hex] ?? hex;
+}
+
 interface CSVExportData {
   files: FileEntry[];
   codes: Code[];
@@ -19,7 +45,7 @@ function isGroupNode(code: Code): boolean {
   return code.startOffset === 0 && code.endOffset === 0 && !code.boundingBox;
 }
 
-export function exportCSV(data: CSVExportData, defaultName: string) {
+export async function exportCSV(data: CSVExportData, defaultName: string) {
   const { files, codes, memos } = data;
   const fileMap = new Map(files.map((f) => [f.id, f]));
 
@@ -50,7 +76,7 @@ export function exportCSV(data: CSVExportData, defaultName: string) {
       [
         csvCell(markedText),
         csvCell(code.text),
-        csvCell(code.color),
+        csvCell(colorName(code.color)),
         csvCell(memoText),
       ].join(','),
     );
@@ -58,10 +84,35 @@ export function exportCSV(data: CSVExportData, defaultName: string) {
 
   const csv = '\uFEFF' + rows.join('\r\n'); // BOM for Excel compatibility
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+  const fileName = `${defaultName}_codes.csv`;
+
+  // Use File System Access API if available (Chrome / Edge) for folder selection
+  if (typeof window.showSaveFilePicker === 'function') {
+    try {
+      const handle = await window.showSaveFilePicker({
+        suggestedName: fileName,
+        types: [
+          {
+            description: 'CSV File',
+            accept: { 'text/csv': ['.csv'] },
+          },
+        ],
+      });
+      const writable = await handle.createWritable();
+      await writable.write(blob);
+      await writable.close();
+      return;
+    } catch (err) {
+      if (err instanceof DOMException && err.name === 'AbortError') return;
+      // Fall through to legacy download
+    }
+  }
+
+  // Fallback: download to browser default location
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `${defaultName}_codes.csv`;
+  a.download = fileName;
   a.click();
   URL.revokeObjectURL(url);
 }

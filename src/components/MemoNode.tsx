@@ -49,11 +49,13 @@ export function MemoNode({ data }: NodeProps) {
         {codeName}
       </div>
 
-      <Handle type="target" position={Position.Left} />
+      <Handle type="target" position={Position.Top} />
 
       <div style={nodeStyle ?? {}}>
         {label as string}
       </div>
+
+      <Handle type="source" position={Position.Bottom} />
     </div>
   );
 }

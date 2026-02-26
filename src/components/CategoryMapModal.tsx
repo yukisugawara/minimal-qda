@@ -79,12 +79,6 @@ export function CategoryMapModal({ onClose, embedded }: CategoryMapModalProps) {
     );
   }, [getChildren]);
 
-  // Build a set of category code IDs for filtering links
-  const categoryIds = useMemo(
-    () => new Set(categories.map((c) => c.id)),
-    [categories],
-  );
-
   const { initialNodes, initialEdges } = useMemo(() => {
     const nodes: Node[] = [];
     const edges: Edge[] = [];
@@ -96,17 +90,16 @@ export function CategoryMapModal({ onClose, embedded }: CategoryMapModalProps) {
       type: 'theoryNode',
       position: { x: 0, y: 0 },
       data: {},
-      sourcePosition: Position.Right,
-      targetPosition: Position.Left,
+      sourcePosition: Position.Bottom,
+      targetPosition: Position.Top,
     });
 
-    const catSpacingY = 120;
-    const catStartY = -((categories.length - 1) * catSpacingY) / 2;
-    const catX = 300;
+    const catSpacingX = 250;
+    const catStartX = -((categories.length - 1) * catSpacingX) / 2;
 
     categories.forEach((cat, i) => {
       const catNodeId = `cat-${cat.id}`;
-      const catY = catStartY + i * catSpacingY;
+      const catX = catStartX + i * catSpacingX;
 
       const children = getChildren(cat.id);
       const totalDescendants = countDescendants(cat.id, allCodes);
@@ -122,9 +115,9 @@ export function CategoryMapModal({ onClose, embedded }: CategoryMapModalProps) {
       nodes.push({
         id: catNodeId,
         type: 'categoryNode',
-        position: { x: catX, y: catY },
-        sourcePosition: Position.Right,
-        targetPosition: Position.Left,
+        position: { x: catX, y: 200 },
+        sourcePosition: Position.Bottom,
+        targetPosition: Position.Top,
         data: {
           label: `${cat.text} (${totalDescendants})`,
           childCodes,
@@ -148,17 +141,26 @@ export function CategoryMapModal({ onClose, embedded }: CategoryMapModalProps) {
       });
     });
 
-    // Add custom link edges between categories
+    // Build a set of all node IDs for custom link lookup
+    const nodeIdSet = new Set(nodes.map((n) => n.id));
+
+    const findNodeId = (rawId: string): string | null => {
+      for (const prefix of ['cat-', 'code-', 'memo-', '']) {
+        const candidate = prefix ? `${prefix}${rawId}` : rawId;
+        if (nodeIdSet.has(candidate)) return candidate;
+      }
+      return rawId === 'root' && nodeIdSet.has('root') ? 'root' : null;
+    };
+
+    // Add custom link edges
     for (const link of codeLinks) {
-      if (
-        !categoryIds.has(link.sourceCodeId) ||
-        !categoryIds.has(link.targetCodeId)
-      )
-        continue;
+      const sourceId = findNodeId(link.sourceCodeId);
+      const targetId = findNodeId(link.targetCodeId);
+      if (!sourceId || !targetId) continue;
       edges.push({
         id: `${CUSTOM_LINK_PREFIX}${link.id}`,
-        source: `cat-${link.sourceCodeId}`,
-        target: `cat-${link.targetCodeId}`,
+        source: sourceId,
+        target: targetId,
         label: link.label || undefined,
         style: { stroke: '#A855F7', strokeWidth: 2, strokeDasharray: '6 3' },
         labelStyle: { fill: '#7C3AED', fontWeight: 600, fontSize: 11 },
@@ -171,7 +173,7 @@ export function CategoryMapModal({ onClose, embedded }: CategoryMapModalProps) {
     }
 
     return { initialNodes: nodes, initialEdges: edges };
-  }, [categories, codeLinks, categoryIds, getChildren, allCodes]);
+  }, [categories, codeLinks, getChildren, allCodes]);
 
   const [nodeList, , onNodesChange] = useNodesState(initialNodes);
   const [edgeList, , onEdgesChange] = useEdgesState(initialEdges);
@@ -182,8 +184,6 @@ export function CategoryMapModal({ onClose, embedded }: CategoryMapModalProps) {
   const handleConnect = useCallback((connection: Connection) => {
     const { source, target } = connection;
     if (!source || !target) return;
-    // Only allow connections between category nodes
-    if (!source.startsWith('cat-') || !target.startsWith('cat-')) return;
     if (source === target) return;
     setDialogState({ type: 'create', sourceNodeId: source, targetNodeId: target });
   }, []);
@@ -200,13 +200,19 @@ export function CategoryMapModal({ onClose, embedded }: CategoryMapModalProps) {
     [codeLinks],
   );
 
+  const stripNodePrefix = (nodeId: string): string => {
+    if (nodeId === 'root') return 'root';
+    const idx = nodeId.indexOf('-');
+    return idx >= 0 ? nodeId.slice(idx + 1) : nodeId;
+  };
+
   // Dialog handlers
   const handleDialogSubmit = useCallback(
     (label: string) => {
       if (!dialogState) return;
       if (dialogState.type === 'create') {
-        const sourceCodeId = dialogState.sourceNodeId.replace('cat-', '');
-        const targetCodeId = dialogState.targetNodeId.replace('cat-', '');
+        const sourceCodeId = stripNodePrefix(dialogState.sourceNodeId);
+        const targetCodeId = stripNodePrefix(dialogState.targetNodeId);
         addCodeLink({
           id: `link-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
           sourceCodeId,

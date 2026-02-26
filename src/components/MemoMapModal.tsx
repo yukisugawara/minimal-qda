@@ -1,4 +1,4 @@
-import { useMemo, useCallback, useRef } from 'react';
+import { useMemo, useCallback, useRef, useState } from 'react';
 import {
   ReactFlow,
   Background,
@@ -8,12 +8,16 @@ import {
   useNodesState,
   useEdgesState,
   type ReactFlowInstance,
+  type Connection,
   Position,
+  MarkerType,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { toPng } from 'html-to-image';
 import { useTranslation } from 'react-i18next';
 import { useAppStore } from '../store/useAppStore';
+import type { CodeLink } from '../store/useAppStore';
+import { LinkLabelDialog } from './LinkLabelDialog';
 import { MemoNode } from './MemoNode';
 import { TheoryNode } from './TheoryNode';
 
@@ -22,12 +26,26 @@ interface MemoMapModalProps {
   embedded?: boolean;
 }
 
+/** Prefix used for custom link edge IDs */
+const CUSTOM_LINK_PREFIX = 'custom-link-';
+
 export function MemoMapModal({ onClose, embedded }: MemoMapModalProps) {
   const { t } = useTranslation();
   const allCodes = useAppStore((s) => s.codes);
   const allMemos = useAppStore((s) => s.memos);
+  const codeLinks = useAppStore((s) => s.codeLinks);
+  const addCodeLink = useAppStore((s) => s.addCodeLink);
+  const removeCodeLink = useAppStore((s) => s.removeCodeLink);
+  const updateCodeLinkLabel = useAppStore((s) => s.updateCodeLinkLabel);
   const rfInstanceRef = useRef<ReactFlowInstance | null>(null);
   const flowWrapperRef = useRef<HTMLDivElement>(null);
+
+  // Dialog state
+  const [dialogState, setDialogState] = useState<
+    | { type: 'create'; sourceNodeId: string; targetNodeId: string }
+    | { type: 'edit'; link: CodeLink }
+    | null
+  >(null);
 
   const nodeTypes = useMemo(() => ({ memoNode: MemoNode, theoryNode: TheoryNode }), []);
 
@@ -52,8 +70,8 @@ export function MemoMapModal({ onClose, embedded }: MemoMapModalProps) {
       type: 'theoryNode',
       position: { x: 0, y: 0 },
       data: {},
-      sourcePosition: Position.Right,
-      targetPosition: Position.Left,
+      sourcePosition: Position.Bottom,
+      targetPosition: Position.Top,
     });
 
     // Build code groups (codes that have memos + unassigned group)
@@ -80,23 +98,21 @@ export function MemoMapModal({ onClose, embedded }: MemoMapModalProps) {
       }
     }
 
-    // Layout: code nodes vertically, memo nodes to their right
-    const codeSpacingY = 140;
-    const codeStartY = -((codeGroups.length - 1) * codeSpacingY) / 2;
-    const codeX = 300;
-    const memoX = 600;
-    const memoSpacingY = 70;
+    // Top-down layout: code groups horizontally at y=200, memos below at y=400
+    const codeSpacingX = 250;
+    const codeStartX = -((codeGroups.length - 1) * codeSpacingX) / 2;
+    const memoSpacingX = 200;
 
     codeGroups.forEach((group, gi) => {
       const codeNodeId = `code-${group.id}`;
-      const codeY = codeStartY + gi * codeSpacingY;
+      const codeX = codeStartX + gi * codeSpacingX;
 
       // Code node
       nodes.push({
         id: codeNodeId,
-        position: { x: codeX, y: codeY },
-        sourcePosition: Position.Right,
-        targetPosition: Position.Left,
+        position: { x: codeX, y: 200 },
+        sourcePosition: Position.Bottom,
+        targetPosition: Position.Top,
         data: {
           label: `${group.name} (${group.memos.length})`,
         },
@@ -118,8 +134,8 @@ export function MemoMapModal({ onClose, embedded }: MemoMapModalProps) {
         style: { stroke: group.color, strokeWidth: 2 },
       });
 
-      // Memo nodes
-      const memoStartY = codeY - ((group.memos.length - 1) * memoSpacingY) / 2;
+      // Memo nodes below each code group
+      const memoStartX = codeX - ((group.memos.length - 1) * memoSpacingX) / 2;
 
       group.memos.forEach((memo, mi) => {
         const memoNodeId = `memo-${memo.id}`;
@@ -131,8 +147,9 @@ export function MemoMapModal({ onClose, embedded }: MemoMapModalProps) {
         nodes.push({
           id: memoNodeId,
           type: 'memoNode',
-          position: { x: memoX, y: memoStartY + mi * memoSpacingY },
-          targetPosition: Position.Left,
+          position: { x: memoStartX + mi * memoSpacingX, y: 400 },
+          sourcePosition: Position.Bottom,
+          targetPosition: Position.Top,
           data: {
             label: truncated,
             codeName: group.name,
@@ -160,13 +177,98 @@ export function MemoMapModal({ onClose, embedded }: MemoMapModalProps) {
       });
     });
 
+    // Build a set of all node IDs for custom link lookup
+    const nodeIdSet = new Set(nodes.map((n) => n.id));
+
+    const findNodeId = (rawId: string): string | null => {
+      for (const prefix of ['memo-', 'code-', 'cat-', '']) {
+        const candidate = prefix ? `${prefix}${rawId}` : rawId;
+        if (nodeIdSet.has(candidate)) return candidate;
+      }
+      return rawId === 'root' && nodeIdSet.has('root') ? 'root' : null;
+    };
+
+    // Add custom link edges from codeLinks
+    for (const link of codeLinks) {
+      const sourceId = findNodeId(link.sourceCodeId);
+      const targetId = findNodeId(link.targetCodeId);
+      if (!sourceId || !targetId) continue;
+      edges.push({
+        id: `${CUSTOM_LINK_PREFIX}${link.id}`,
+        source: sourceId,
+        target: targetId,
+        label: link.label || undefined,
+        style: { stroke: '#A855F7', strokeWidth: 2, strokeDasharray: '6 3' },
+        labelStyle: { fill: '#7C3AED', fontWeight: 600, fontSize: 11 },
+        labelBgStyle: { fill: '#F5F3FF', fillOpacity: 0.9 },
+        labelBgPadding: [4, 8] as [number, number],
+        labelBgBorderRadius: 6,
+        markerEnd: { type: MarkerType.ArrowClosed, color: '#A855F7' },
+        animated: true,
+      });
+    }
+
     return { initialNodes: nodes, initialEdges: edges };
-  }, [allCodes, allMemos, t]);
+  }, [allCodes, allMemos, codeLinks, t]);
 
   const [nodeList, , onNodesChange] = useNodesState(initialNodes);
   const [edgeList, , onEdgesChange] = useEdgesState(initialEdges);
 
   const hasData = allMemos.length > 0;
+
+  const stripNodePrefix = (nodeId: string): string => {
+    if (nodeId === 'root') return 'root';
+    const idx = nodeId.indexOf('-');
+    return idx >= 0 ? nodeId.slice(idx + 1) : nodeId;
+  };
+
+  // Handle new connection from drag between nodes
+  const handleConnect = useCallback((connection: Connection) => {
+    const { source, target } = connection;
+    if (!source || !target) return;
+    if (source === target) return;
+    setDialogState({ type: 'create', sourceNodeId: source, targetNodeId: target });
+  }, []);
+
+  // Handle click on an edge
+  const handleEdgeClick = useCallback(
+    (_event: React.MouseEvent, edge: Edge) => {
+      if (!edge.id.startsWith(CUSTOM_LINK_PREFIX)) return;
+      const linkId = edge.id.slice(CUSTOM_LINK_PREFIX.length);
+      const link = codeLinks.find((l) => l.id === linkId);
+      if (!link) return;
+      setDialogState({ type: 'edit', link });
+    },
+    [codeLinks],
+  );
+
+  // Dialog handlers
+  const handleDialogSubmit = useCallback(
+    (label: string) => {
+      if (!dialogState) return;
+      if (dialogState.type === 'create') {
+        const sourceCodeId = stripNodePrefix(dialogState.sourceNodeId);
+        const targetCodeId = stripNodePrefix(dialogState.targetNodeId);
+        addCodeLink({
+          id: `link-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+          sourceCodeId,
+          targetCodeId,
+          label,
+        });
+      } else {
+        updateCodeLinkLabel(dialogState.link.id, label);
+      }
+      setDialogState(null);
+    },
+    [dialogState, addCodeLink, updateCodeLinkLabel],
+  );
+
+  const handleDialogDelete = useCallback(() => {
+    if (dialogState?.type === 'edit') {
+      removeCodeLink(dialogState.link.id);
+    }
+    setDialogState(null);
+  }, [dialogState, removeCodeLink]);
 
   const handleExportImage = useCallback(async () => {
     const instance = rfInstanceRef.current;
@@ -229,30 +331,44 @@ export function MemoMapModal({ onClose, embedded }: MemoMapModalProps) {
   }, []);
 
   const flowContent = (
-    <div className="flex-1" ref={flowWrapperRef}>
-      {hasData ? (
-        <ReactFlow
-          nodes={nodeList}
-          edges={edgeList}
-          nodeTypes={nodeTypes}
-          onNodesChange={onNodesChange}
-          onEdgesChange={onEdgesChange}
-          onInit={(instance) => {
-            rfInstanceRef.current = instance;
-            instance.fitView({ padding: 0.3 });
-          }}
-          fitView
-          proOptions={{ hideAttribution: true }}
-        >
-          <Background />
-          <Controls />
-        </ReactFlow>
-      ) : (
-        <div className="flex items-center justify-center h-full text-gray-400 dark:text-gray-500 text-sm">
-          {t('memomap.noData')}
-        </div>
+    <>
+      <div className="flex-1" ref={flowWrapperRef}>
+        {hasData ? (
+          <ReactFlow
+            nodes={nodeList}
+            edges={edgeList}
+            nodeTypes={nodeTypes}
+            onNodesChange={onNodesChange}
+            onEdgesChange={onEdgesChange}
+            onConnect={handleConnect}
+            onEdgeClick={handleEdgeClick}
+            onInit={(instance) => {
+              rfInstanceRef.current = instance;
+              instance.fitView({ padding: 0.3 });
+            }}
+            fitView
+            proOptions={{ hideAttribution: true }}
+          >
+            <Background />
+            <Controls />
+          </ReactFlow>
+        ) : (
+          <div className="flex items-center justify-center h-full text-gray-400 dark:text-gray-500 text-sm">
+            {t('memomap.noData')}
+          </div>
+        )}
+      </div>
+
+      {dialogState && (
+        <LinkLabelDialog
+          mode={dialogState.type}
+          initialLabel={dialogState.type === 'edit' ? dialogState.link.label : ''}
+          onSubmit={handleDialogSubmit}
+          onDelete={dialogState.type === 'edit' ? handleDialogDelete : undefined}
+          onCancel={() => setDialogState(null)}
+        />
       )}
-    </div>
+    </>
   );
 
   if (embedded) {

@@ -76,8 +76,8 @@ export function MindMapModal({ onClose, embedded }: MindMapModalProps) {
       type: 'theoryNode',
       position: { x: 0, y: 0 },
       data: {},
-      sourcePosition: Position.Right,
-      targetPosition: Position.Left,
+      sourcePosition: Position.Bottom,
+      targetPosition: Position.Top,
     });
 
     const getChildren = (parentId: string | null) =>
@@ -116,21 +116,20 @@ export function MindMapModal({ onClose, embedded }: MindMapModalProps) {
       });
     }
 
-    // Recursive helper to add nodes for a subtree
-    let currentX = 300;
+    // Top-down layout: recursive helper to add nodes for a subtree
+    const spacingX = 200;
     const addSubtree = (
       parentNodeId: string,
       children: Code[],
-      x: number,
-      baseY: number,
+      baseX: number,
+      y: number,
       parentColor: string,
     ): number => {
-      const spacingY = 60;
-      const startY = baseY - ((children.length - 1) * spacingY) / 2;
+      const startX = baseX - ((children.length - 1) * spacingX) / 2;
 
       children.forEach((code, ci) => {
         const codeNodeId = `code-${code.id}`;
-        const y = startY + ci * spacingY;
+        const x = startX + ci * spacingX;
 
         const file = fileMap.get(code.fileId);
         const isText = code.startOffset !== 0 || code.endOffset !== 0;
@@ -160,8 +159,8 @@ export function MindMapModal({ onClose, embedded }: MindMapModalProps) {
           id: codeNodeId,
           type: 'codeNode',
           position: { x, y },
-          sourcePosition: Position.Right,
-          targetPosition: Position.Left,
+          sourcePosition: Position.Bottom,
+          targetPosition: Position.Top,
           data: nodeData,
         });
 
@@ -175,25 +174,25 @@ export function MindMapModal({ onClose, embedded }: MindMapModalProps) {
         // Recursively add grandchildren
         const grandchildren = getChildren(code.id);
         if (grandchildren.length > 0) {
-          addSubtree(codeNodeId, grandchildren, x + 280, y, code.color);
+          addSubtree(codeNodeId, grandchildren, x, y + 200, code.color);
         }
       });
 
       return children.length;
     };
 
-    const catSpacingY = 140;
-    const catStartY = -((allGroups.length - 1) * catSpacingY) / 2;
+    const catSpacingX = 200;
+    const catStartX = -((allGroups.length - 1) * catSpacingX) / 2;
 
     allGroups.forEach((group, gi) => {
       const catNodeId = `cat-${group.id}`;
-      const catY = catStartY + gi * catSpacingY;
+      const catX = catStartX + gi * catSpacingX;
 
       nodes.push({
         id: catNodeId,
-        position: { x: currentX, y: catY },
-        sourcePosition: Position.Right,
-        targetPosition: Position.Left,
+        position: { x: catX, y: 200 },
+        sourcePosition: Position.Bottom,
+        targetPosition: Position.Top,
         data: { label: `${group.name} (${group.children.length})` },
         style: {
           background: group.color + '20',
@@ -213,17 +212,31 @@ export function MindMapModal({ onClose, embedded }: MindMapModalProps) {
       });
 
       if (group.children.length > 0) {
-        addSubtree(catNodeId, group.children, currentX + 320, catY, group.color);
+        addSubtree(catNodeId, group.children, catX, 400, group.color);
       }
     });
 
+    // Build a set of all node IDs for custom link lookup
+    const nodeIdSet = new Set(nodes.map((n) => n.id));
+
+    // Helper to find a node ID by raw code ID (tries prefixed variants)
+    const findNodeId = (rawId: string): string | null => {
+      for (const prefix of ['code-', 'cat-', 'memo-', '']) {
+        const candidate = prefix ? `${prefix}${rawId}` : rawId;
+        if (nodeIdSet.has(candidate)) return candidate;
+      }
+      return rawId === 'root' && nodeIdSet.has('root') ? 'root' : null;
+    };
+
     // Add custom link edges from codeLinks
     for (const link of codeLinks) {
-      if (!allCodeIds.has(link.sourceCodeId) || !allCodeIds.has(link.targetCodeId)) continue;
+      const sourceId = findNodeId(link.sourceCodeId);
+      const targetId = findNodeId(link.targetCodeId);
+      if (!sourceId || !targetId) continue;
       edges.push({
         id: `${CUSTOM_LINK_PREFIX}${link.id}`,
-        source: `code-${link.sourceCodeId}`,
-        target: `code-${link.targetCodeId}`,
+        source: sourceId,
+        target: targetId,
         label: link.label || undefined,
         style: { stroke: '#A855F7', strokeWidth: 2, strokeDasharray: '6 3' },
         labelStyle: { fill: '#7C3AED', fontWeight: 600, fontSize: 11 },
@@ -247,9 +260,6 @@ export function MindMapModal({ onClose, embedded }: MindMapModalProps) {
   const handleConnect = useCallback((connection: Connection) => {
     const { source, target } = connection;
     if (!source || !target) return;
-    // Only allow connections between code nodes (not root/cat)
-    if (!source.startsWith('code-') || !target.startsWith('code-')) return;
-    // Prevent self-links
     if (source === target) return;
     setDialogState({ type: 'create', sourceNodeId: source, targetNodeId: target });
   }, []);
@@ -267,13 +277,20 @@ export function MindMapModal({ onClose, embedded }: MindMapModalProps) {
     [codeLinks],
   );
 
+  // Strip any known prefix from a node ID to get the raw code/cat ID
+  const stripNodePrefix = (nodeId: string): string => {
+    if (nodeId === 'root') return 'root';
+    const idx = nodeId.indexOf('-');
+    return idx >= 0 ? nodeId.slice(idx + 1) : nodeId;
+  };
+
   // Dialog handlers
   const handleDialogSubmit = useCallback(
     (label: string) => {
       if (!dialogState) return;
       if (dialogState.type === 'create') {
-        const sourceCodeId = dialogState.sourceNodeId.replace('code-', '');
-        const targetCodeId = dialogState.targetNodeId.replace('code-', '');
+        const sourceCodeId = stripNodePrefix(dialogState.sourceNodeId);
+        const targetCodeId = stripNodePrefix(dialogState.targetNodeId);
         addCodeLink({
           id: `link-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
           sourceCodeId,

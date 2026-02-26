@@ -24,6 +24,18 @@ function getDescendantIds(codes: Code[], parentId: string): Set<string> {
   return ids;
 }
 
+/** Count non-group descendant codes (actual text/image codes, not categories) */
+function countDescendantCodes(codes: Code[], parentId: string): number {
+  const descendantIds = getDescendantIds(codes, parentId);
+  let count = 0;
+  for (const c of codes) {
+    if (descendantIds.has(c.id) && !isGroupNode(c)) {
+      count++;
+    }
+  }
+  return count;
+}
+
 type DropZone = 'above' | 'child' | 'below';
 
 export function CodesPanel() {
@@ -319,7 +331,10 @@ function TreeNode({
   const isDragging = dragCodeId === code.id;
   const isDropTarget = dropTarget?.codeId === code.id;
   const dropZone = isDropTarget ? dropTarget.zone : null;
-  const descendantCount = hasChildren ? getDescendantIds(codes, code.id).size : 0;
+  // Count: self (1 if actual code) + all descendant non-group codes
+  const selfCount = isGroup ? 0 : 1;
+  const descendantCodeCount = countDescendantCodes(codes, code.id);
+  const totalCodeCount = selfCount + descendantCodeCount;
 
   const dropBorderClass =
     dropZone === 'above'
@@ -431,10 +446,10 @@ function TreeNode({
           </span>
         )}
 
-        {/* Descendant count */}
-        {hasChildren && (
+        {/* Code count: all codes show their total (self + descendants) */}
+        {totalCodeCount > 0 && (
           <span className="text-xs text-gray-400 dark:text-gray-500 flex-shrink-0 tabular-nums">
-            {descendantCount}
+            {totalCodeCount}
           </span>
         )}
 

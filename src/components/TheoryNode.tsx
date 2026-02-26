@@ -56,7 +56,7 @@ export function TheoryNode({ data }: TheoryNodeProps) {
           maxWidth: 280,
         }}
       >
-        <Handle type="source" position={Position.Right} />
+        <Handle type="source" position={Position.Bottom} />
         <textarea
           ref={inputRef}
           value={draft}
@@ -111,7 +111,7 @@ export function TheoryNode({ data }: TheoryNodeProps) {
         textAlign: 'center',
       }}
     >
-      <Handle type="source" position={Position.Right} />
+      <Handle type="source" position={Position.Bottom} />
       {isEmpty ? (
         <div>
           <div

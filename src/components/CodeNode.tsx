@@ -32,13 +32,13 @@ export function CodeNode({ data }: NodeProps) {
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
-      <Handle type="target" position={Position.Left} />
+      <Handle type="target" position={Position.Top} />
 
       <div style={nodeStyle ?? {}}>
         {label as string}
       </div>
 
-      <Handle type="source" position={Position.Right} />
+      <Handle type="source" position={Position.Bottom} />
 
       {hasTooltip && (
         <div

@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAppStore } from '../store/useAppStore';
+import { importFile } from '../utils/importFile';
 
 export function FilesPanel() {
   const { t } = useTranslation();
@@ -8,11 +9,52 @@ export function FilesPanel() {
   const activeFileId = useAppStore((s) => s.activeFileId);
   const setActiveFileId = useAppStore((s) => s.setActiveFileId);
   const removeFile = useAppStore((s) => s.removeFile);
+  const addFile = useAppStore((s) => s.addFile);
+  const restoreState = useAppStore((s) => s.restoreState);
 
   const [filesCollapsed, setFilesCollapsed] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragOver(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragOver(false);
+  }, []);
+
+  const handleDrop = useCallback(
+    async (e: React.DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setDragOver(false);
+
+      const droppedFiles = Array.from(e.dataTransfer.files);
+      for (const file of droppedFiles) {
+        const result = await importFile(file);
+        if (result?.type === 'project') {
+          restoreState(result.data);
+        } else if (result?.type === 'file') {
+          addFile(result.entry);
+        }
+      }
+    },
+    [addFile, restoreState],
+  );
 
   return (
-    <div className="flex flex-col h-full bg-cream-100/60 dark:bg-dpurple-900/60">
+    <div
+      className={`flex flex-col h-full bg-cream-100/60 dark:bg-dpurple-900/60 transition-colors ${
+        dragOver ? 'ring-2 ring-inset ring-violet-400 dark:ring-violet-500 bg-violet-50/50 dark:bg-violet-900/30' : ''
+      }`}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
       {/* File list section */}
       <div
         className="flex items-center justify-between px-3 pt-3 pb-1 cursor-pointer select-none hover:bg-violet-50/50 dark:hover:bg-violet-900/20 transition-colors"
@@ -28,9 +70,14 @@ export function FilesPanel() {
       {!filesCollapsed && (
         <div className="flex-1 overflow-y-auto px-3 pb-2 min-h-0">
           {files.length === 0 ? (
-            <p className="text-xs text-gray-400 dark:text-gray-500 italic mt-1">
-              {t('leftPane.noFiles')}
-            </p>
+            <div className="flex flex-col items-center justify-center py-6 text-center">
+              <p className="text-xs text-gray-400 dark:text-gray-500 italic">
+                {t('leftPane.noFiles')}
+              </p>
+              <p className="text-[10px] text-gray-400/70 dark:text-gray-500/70 mt-1">
+                {t('leftPane.dropHint', 'Drop files here')}
+              </p>
+            </div>
           ) : (
             <ul className="space-y-0.5 mt-1">
               {files.map((file) => (
@@ -60,6 +107,20 @@ export function FilesPanel() {
               ))}
             </ul>
           )}
+        </div>
+      )}
+
+      {/* Drop overlay */}
+      {dragOver && (
+        <div className="absolute inset-0 flex items-center justify-center bg-violet-100/60 dark:bg-violet-900/40 backdrop-blur-[2px] rounded-lg pointer-events-none z-10">
+          <div className="flex flex-col items-center gap-1 text-violet-600 dark:text-violet-300">
+            <svg width="28" height="28" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M2.5 10V12.5C2.5 13.05 2.95 13.5 3.5 13.5H12.5C13.05 13.5 13.5 13.05 13.5 12.5V10" />
+              <path d="M8 2.5V10" />
+              <path d="M5 7L8 10L11 7" />
+            </svg>
+            <span className="text-xs font-medium">Drop to import</span>
+          </div>
         </div>
       )}
     </div>

@@ -63,9 +63,9 @@ interface CodeBar {
   column: number;
 }
 
-const BAR_WIDTH = 4;
-const BAR_GAP = 2;
-const GUTTER_PAD = 6;
+const BAR_WIDTH = 54;
+const BAR_GAP = 3;
+const GUTTER_PAD = 4;
 
 export function CenterPane() {
   const { t } = useTranslation();
@@ -79,6 +79,7 @@ export function CenterPane() {
   const setCodingMode = useAppStore((s) => s.setCodingMode);
   const selectedCodeId = useAppStore((s) => s.selectedCodeId);
   const setSelectedCodeId = useAppStore((s) => s.setSelectedCodeId);
+  const updateCodeColor = useAppStore((s) => s.updateCodeColor);
   const contentRef = useRef<HTMLDivElement>(null);
   const gutterRef = useRef<HTMLDivElement>(null);
   const [pendingSelection, setPendingSelection] = useState<{
@@ -97,6 +98,13 @@ export function CenterPane() {
   const isImage = fileType && IMAGE_EXTS.has(fileType);
   const isPdf = fileType === 'pdf';
   const isText = fileType && !isImage && !isPdf;
+
+  // Switch to interpretive mode for image/pdf files (in-vivo not available)
+  useEffect(() => {
+    if ((isImage || isPdf) && codingMode === 'in-vivo') {
+      setCodingMode('interpretive');
+    }
+  }, [isImage, isPdf, codingMode, setCodingMode]);
 
   // Codes that appear in the gutter
   const textCodes = codes.filter((c) => !c.boundingBox && c.endOffset > c.startOffset);
@@ -271,6 +279,7 @@ export function CenterPane() {
     >
       {codeBars.map((bar) => {
         const isSelected = selectedCodeId === bar.codeId;
+        const label = bar.text.length > 7 ? bar.text.slice(0, 7) + '…' : bar.text;
         return (
           <div
             key={bar.codeId}
@@ -282,25 +291,27 @@ export function CenterPane() {
               height: bar.height,
             }}
           >
-            {/* Bar */}
+            {/* Thin vertical stripe */}
             <div
               onClick={() => setSelectedCodeId(bar.codeId)}
-              className={`w-full h-full rounded-full cursor-pointer transition-opacity ${
-                isSelected ? 'opacity-100 ring-1 ring-offset-1 ring-gray-700 dark:ring-gray-300' : 'opacity-70 hover:opacity-100'
+              className={`absolute left-0 w-[3px] h-full rounded-full cursor-pointer transition-opacity ${
+                isSelected ? 'opacity-100' : 'opacity-60 hover:opacity-100'
               }`}
               style={{ backgroundColor: bar.color }}
             />
-            {/* Hover label */}
-            <div className="absolute left-full ml-1.5 top-0 opacity-0 group-hover/bar:opacity-100 pointer-events-none transition-opacity duration-150 z-20">
-              <div className="flex items-center gap-1.5 px-2 py-1 bg-white/95 dark:bg-dpurple-800/95 backdrop-blur-sm rounded-lg shadow-lg border border-violet-200/50 dark:border-violet-600/30 whitespace-nowrap text-xs max-w-[200px]">
-                <div
-                  className="w-2.5 h-2.5 rounded-full flex-shrink-0"
-                  style={{ backgroundColor: bar.color }}
-                />
-                <span className="truncate text-gray-700 dark:text-gray-200 font-medium">
-                  {bar.text}
-                </span>
-              </div>
+            {/* Code name label */}
+            <div
+              onClick={() => setSelectedCodeId(bar.codeId)}
+              className={`absolute left-1 top-0 cursor-pointer select-none truncate rounded px-1 py-px text-[9px] leading-tight font-semibold text-white/90 transition-opacity ${
+                isSelected ? 'opacity-100 ring-1 ring-gray-700 dark:ring-gray-300' : 'opacity-75 hover:opacity-100'
+              }`}
+              style={{
+                backgroundColor: bar.color,
+                maxWidth: BAR_WIDTH - 6,
+              }}
+              title={bar.text}
+            >
+              {label}
             </div>
           </div>
         );
@@ -317,13 +328,19 @@ export function CenterPane() {
           onInVivo={() => setCodingMode('in-vivo')}
           onNewCode={() => setCodingMode('interpretive')}
           hideInVivo={!!isImage || !!isPdf}
+          codingMode={codingMode}
         />
 
         <div className="grid grid-cols-9 gap-1.5">
           {MARKER_COLORS.map((color) => (
             <button
               key={color}
-              onClick={() => setActiveMarkerColor(color)}
+              onClick={() => {
+                setActiveMarkerColor(color);
+                if (selectedCodeId) {
+                  updateCodeColor(selectedCodeId, color);
+                }
+              }}
               className={`w-6 h-6 rounded-full border-2 transition-all active:scale-95 ${
                 activeMarkerColor === color
                   ? 'border-violet-500 dark:border-violet-300 scale-110 ring-2 ring-violet-300/50 shadow-md'
