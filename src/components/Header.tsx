@@ -5,6 +5,7 @@ import { saveProject, saveProjectAs, hasSavedFileHandle, supportsNativeSave } fr
 import { exportHTML } from '../utils/exportHTML';
 import { exportCSV } from '../utils/exportCSV';
 import { exportPNG, exportPDF } from '../utils/exportViewer';
+import { exportQdc, exportQdpx } from '../utils/exportRefiQda';
 import { importFile } from '../utils/importFile';
 import { Logo } from './Logo';
 import { GoogleDriveSettingsModal } from './GoogleDriveSettingsModal';
@@ -362,10 +363,14 @@ function ExportDropdown({
   onCSV,
   onPNG,
   onPDF,
+  onQdpx,
+  onQdc,
 }: {
   onCSV: () => void;
   onPNG: () => void;
   onPDF: () => void;
+  onQdpx: () => void;
+  onQdc: () => void;
 }) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
@@ -438,6 +443,32 @@ function ExportDropdown({
             <div className="min-w-0">
               <div className="font-medium">{t('header.exportPdf')}</div>
               <div className="text-[10px] text-gray-400 dark:text-gray-500">{t('header.pdfTooltip')}</div>
+            </div>
+          </button>
+
+          <div className="mx-2 my-0.5 border-t border-gray-200/50 dark:border-gray-600/30" />
+
+          <button
+            onClick={() => { onQdpx(); close(); }}
+            className="flex items-center gap-2.5 w-full px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-violet-50 dark:hover:bg-violet-900/30 transition-colors text-left"
+          >
+            <span className="flex-shrink-0 text-gray-500 dark:text-gray-400"><CsvIcon /></span>
+            <div className="min-w-0">
+              <div className="font-medium">{t('header.exportQdpx')}</div>
+              <div className="text-[10px] text-gray-400 dark:text-gray-500">{t('header.qdpxTooltip')}</div>
+            </div>
+          </button>
+
+          <div className="mx-2 my-0.5 border-t border-gray-200/50 dark:border-gray-600/30" />
+
+          <button
+            onClick={() => { onQdc(); close(); }}
+            className="flex items-center gap-2.5 w-full px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-violet-50 dark:hover:bg-violet-900/30 transition-colors text-left"
+          >
+            <span className="flex-shrink-0 text-gray-500 dark:text-gray-400"><CsvIcon /></span>
+            <div className="min-w-0">
+              <div className="font-medium">{t('header.exportQdc')}</div>
+              <div className="text-[10px] text-gray-400 dark:text-gray-500">{t('header.qdcTooltip')}</div>
             </div>
           </button>
         </div>
@@ -592,6 +623,21 @@ export function Header({ onOpenMap, onResetLayout }: HeaderProps) {
     if (data) exportPDF(data);
   };
 
+  const handleExportQdpx = async () => {
+    const activeFile = store.files.find((f) => f.id === store.activeFileId);
+    const defaultName = activeFile?.fileName?.replace(/\.[^.]+$/, '') ?? 'project';
+    await exportQdpx(
+      { files: store.files, codes: store.codes, memos: store.memos, projectName: defaultName },
+      defaultName,
+    );
+  };
+
+  const handleExportQdc = async () => {
+    const activeFile = store.files.find((f) => f.id === store.activeFileId);
+    const defaultName = activeFile?.fileName?.replace(/\.[^.]+$/, '') ?? 'codebook';
+    await exportQdc(store.codes, defaultName);
+  };
+
   return (
     <header className="flex items-center justify-between px-4 py-2.5 bg-gradient-to-r from-violet-500 via-pink-500 to-orange-400 dark:from-dpurple-900 dark:via-violet-700 dark:to-dpurple-800 text-white shadow-lg">
       <Logo />
@@ -626,6 +672,8 @@ export function Header({ onOpenMap, onResetLayout }: HeaderProps) {
           onCSV={handleExportCSV}
           onPNG={handleExportPNG}
           onPDF={handleExportPDF}
+          onQdpx={handleExportQdpx}
+          onQdc={handleExportQdc}
         />
         <HeaderButton
           onClick={onOpenMap}

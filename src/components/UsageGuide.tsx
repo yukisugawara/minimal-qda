@@ -196,7 +196,7 @@ export function UsageGuide() {
                 <p className="text-xs text-gray-700 dark:text-gray-200 leading-relaxed">
                   <span className="font-semibold">{t('usage.formatExport')}</span>{' '}
                   <code className="px-1 py-0.5 rounded bg-violet-100 dark:bg-violet-800/40 text-[11px] text-violet-700 dark:text-violet-300">
-                    .mqda .csv .png
+                    .mqda .csv .png .pdf .qdpx .qdc
                   </code>
                 </p>
                 <p className="text-[11px] text-gray-600 dark:text-gray-400 leading-relaxed mt-1">
