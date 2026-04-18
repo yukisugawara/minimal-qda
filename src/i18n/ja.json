@@ -174,6 +174,7 @@
     "formatImport": "読み込み:",
     "formatExport": "出力:",
     "formatRefiQda": "REFI-QDA 連携: .qdpx はテキスト・コード体系・コーディング範囲を入出力でき、MAXQDA / NVivo / ATLAS.ti と相互運用できます。.qdc はコード階層のみの入出力に対応（取り込み時は現在アクティブなファイルに追加）。",
+    "formatMaxqdaNote": "MAXQDA から読み込むとき: MAXQDA の独自形式（.mx22 / .mx24 など）は直接読み込めません。MAXQDA 側で「REFI-QDA プロジェクト (.qdpx)」または「REFI-QDA コードブック (.qdc)」としてエクスポートしてから、本アプリに読み込ませてください。逆方向も同様に、本アプリの Export から .qdpx / .qdc を書き出して MAXQDA でインポートできます。",
     "saveResume": "作業の保存と再開",
     "saveResumeDesc": "作業を中断するときは「保存」ボタンで .mqda ファイルをダウンロードしてください。次回 Import から .mqda ファイルを読み込めば、すべてのファイル・コード・メモが復元され、作業を再開できます。"
   },

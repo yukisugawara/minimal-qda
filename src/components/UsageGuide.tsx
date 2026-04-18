@@ -202,6 +202,11 @@ export function UsageGuide() {
                 <p className="text-[11px] text-gray-600 dark:text-gray-400 leading-relaxed mt-1">
                   {t('usage.formatRefiQda')}
                 </p>
+                <div className="mt-2 p-2.5 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200/60 dark:border-amber-700/40">
+                  <p className="text-[11px] text-amber-900 dark:text-amber-200 leading-relaxed">
+                    {t('usage.formatMaxqdaNote')}
+                  </p>
+                </div>
               </div>
             </Section>
 
