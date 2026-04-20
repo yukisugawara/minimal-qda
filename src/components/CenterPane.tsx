@@ -394,8 +394,12 @@ export function CenterPane() {
                           key={i}
                           data-code-ids={seg.codes.map((c) => c.id).join(',')}
                           onClick={() => setSelectedCodeId(topCode.id)}
-                          className={`cursor-pointer rounded-sm ${isSelected ? 'ring-2 ring-gray-800' : ''}`}
-                          style={{ backgroundColor: topCode.color + '80' }}
+                          className={`cursor-pointer rounded-sm transition-all ${
+                            isSelected
+                              ? 'ring-[3px] ring-violet-600 dark:ring-violet-300 shadow-md font-semibold'
+                              : ''
+                          }`}
+                          style={{ backgroundColor: topCode.color + (isSelected ? 'FF' : '80') }}
                         >
                           {seg.text}
                         </mark>
