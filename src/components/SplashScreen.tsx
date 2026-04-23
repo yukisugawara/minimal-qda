@@ -195,7 +195,7 @@ export function SplashScreen({ onFinish }: SplashScreenProps) {
             transition: 'all 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.3s',
           }}
         >
-          Qualitative Insight
+          From fieldnotes to ethnography
         </div>
 
         {/* Progress line */}
