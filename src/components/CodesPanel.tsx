@@ -40,8 +40,10 @@ type DropZone = 'above' | 'child' | 'below';
 
 export function CodesPanel() {
   const { t } = useTranslation();
-  const allCodes = useAppStore((s) => s.codes);
+  const codes = useAppStore((s) => s.codes);
+  const files = useAppStore((s) => s.files);
   const activeFileId = useAppStore((s) => s.activeFileId);
+  const setActiveFileId = useAppStore((s) => s.setActiveFileId);
   const selectedCodeId = useAppStore((s) => s.selectedCodeId);
   const setSelectedCodeId = useAppStore((s) => s.setSelectedCodeId);
   const removeCode = useAppStore((s) => s.removeCode);
@@ -49,8 +51,19 @@ export function CodesPanel() {
   const moveCode = useAppStore((s) => s.moveCode);
   const updateCodeText = useAppStore((s) => s.updateCodeText);
 
-  // Filter codes by active file
-  const codes = allCodes.filter((c) => c.fileId === activeFileId);
+  const fileNameById = new Map(files.map((f) => [f.id, f.fileName]));
+  const showFileLabel = files.length > 1;
+
+  const handleSelectCode = useCallback(
+    (id: string) => {
+      const c = codes.find((x) => x.id === id);
+      if (c && c.fileId !== activeFileId) {
+        setActiveFileId(c.fileId);
+      }
+      setSelectedCodeId(id);
+    },
+    [codes, activeFileId, setActiveFileId, setSelectedCodeId],
+  );
 
   const [colorPickerCodeId, setColorPickerCodeId] = useState<string | null>(null);
   const colorPickerRef = useRef<HTMLDivElement>(null);
@@ -104,6 +117,14 @@ export function CodesPanel() {
       const descendants = getDescendantIds(codes, dragCodeId);
       if (descendants.has(targetId)) return;
 
+      // Block cross-file moves: codes can only be re-parented within their own file
+      const dragged = codes.find((c) => c.id === dragCodeId);
+      const target = codes.find((c) => c.id === targetId);
+      if (dragged && target && dragged.fileId !== target.fileId) {
+        e.dataTransfer.dropEffect = 'none';
+        return;
+      }
+
       e.dataTransfer.dropEffect = 'move';
 
       const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
@@ -140,6 +161,13 @@ export function CodesPanel() {
 
       const target = codes.find((c) => c.id === targetId);
       if (!target) return;
+
+      const dragged = codes.find((c) => c.id === codeId);
+      if (dragged && dragged.fileId !== target.fileId) {
+        setDropTarget(null);
+        setDragCodeId(null);
+        return;
+      }
 
       const { zone } = dropTarget;
 
@@ -202,7 +230,12 @@ export function CodesPanel() {
       e.preventDefault();
       const codeId = e.dataTransfer.getData('text/plain');
       if (!codeId) return;
-      const rootSiblings = codes.filter((c) => c.parentId === null);
+      const dragged = codes.find((c) => c.id === codeId);
+      if (!dragged) return;
+      // Root drops keep the code in its own file (parentId becomes null).
+      const rootSiblings = codes.filter(
+        (c) => c.parentId === null && c.fileId === dragged.fileId,
+      );
       const maxOrder = rootSiblings.length > 0 ? Math.max(...rootSiblings.map((c) => c.order)) : -1;
       moveCode(codeId, null, maxOrder + 1);
       setDropTarget(null);
@@ -211,7 +244,17 @@ export function CodesPanel() {
     [codes, moveCode]
   );
 
-  const rootCodes = getSortedChildren(null);
+  // Root-level codes are sorted by their file's position first, then by their
+  // own order — this keeps each file's roots together as a contiguous block.
+  const fileIndex = new Map(files.map((f, i) => [f.id, i]));
+  const rootCodes = codes
+    .filter((c) => c.parentId === null)
+    .sort((a, b) => {
+      const fa = fileIndex.get(a.fileId) ?? Number.MAX_SAFE_INTEGER;
+      const fb = fileIndex.get(b.fileId) ?? Number.MAX_SAFE_INTEGER;
+      if (fa !== fb) return fa - fb;
+      return a.order - b.order;
+    });
 
   return (
     <div className="flex flex-col h-full bg-cream-100/60 dark:bg-dpurple-900/60">
@@ -247,7 +290,8 @@ export function CodesPanel() {
                   depth={0}
                   codes={codes}
                   selectedCodeId={selectedCodeId}
-                  setSelectedCodeId={setSelectedCodeId}
+                  setSelectedCodeId={handleSelectCode}
+                  fileLabel={showFileLabel ? fileNameById.get(code.fileId) ?? null : null}
                   removeCode={removeCode}
                   updateCodeColor={updateCodeColor}
                   updateCodeText={updateCodeText}
@@ -280,7 +324,8 @@ interface TreeNodeProps {
   depth: number;
   codes: Code[];
   selectedCodeId: string | null;
-  setSelectedCodeId: (id: string | null) => void;
+  setSelectedCodeId: (id: string) => void;
+  fileLabel: string | null;
   removeCode: (id: string) => void;
   updateCodeColor: (id: string, color: string) => void;
   updateCodeText: (id: string, text: string) => void;
@@ -306,6 +351,7 @@ function TreeNode({
   codes,
   selectedCodeId,
   setSelectedCodeId,
+  fileLabel,
   removeCode,
   updateCodeColor,
   updateCodeText,
@@ -432,18 +478,28 @@ function TreeNode({
             onCancel={() => setEditingId(null)}
           />
         ) : (
-          <span
-            className={`truncate flex-1 ${isGroup ? 'font-semibold' : ''}`}
-            title={code.text}
-            onDoubleClick={(e) => {
-              if (isGroup) {
-                e.stopPropagation();
-                setEditingId(code.id);
-              }
-            }}
-          >
-            {code.text.length > 30 ? code.text.slice(0, 30) + '\u2026' : code.text}
-          </span>
+          <div className="flex-1 min-w-0 flex flex-col">
+            <span
+              className={`truncate ${isGroup ? 'font-semibold' : ''}`}
+              title={code.text}
+              onDoubleClick={(e) => {
+                if (isGroup) {
+                  e.stopPropagation();
+                  setEditingId(code.id);
+                }
+              }}
+            >
+              {code.text.length > 30 ? code.text.slice(0, 30) + '\u2026' : code.text}
+            </span>
+            {fileLabel && (
+              <span
+                className="truncate text-[10px] leading-tight text-gray-400 dark:text-gray-500"
+                title={fileLabel}
+              >
+                {fileLabel}
+              </span>
+            )}
+          </div>
         )}
 
         {/* Code count: all codes show their total (self + descendants) */}
@@ -477,6 +533,7 @@ function TreeNode({
               codes={codes}
               selectedCodeId={selectedCodeId}
               setSelectedCodeId={setSelectedCodeId}
+              fileLabel={null}
               removeCode={removeCode}
               updateCodeColor={updateCodeColor}
               updateCodeText={updateCodeText}

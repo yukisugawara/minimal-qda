@@ -63,9 +63,12 @@ interface CodeBar {
   column: number;
 }
 
-const BAR_WIDTH = 54;
+const DEFAULT_BAR_WIDTH = 54;
+const MIN_BAR_WIDTH = 20;
+const MAX_BAR_WIDTH = 300;
 const BAR_GAP = 3;
 const GUTTER_PAD = 4;
+const BAR_WIDTH_STORAGE_KEY = 'qda.gutterBarWidth';
 
 export function CenterPane() {
   const { t } = useTranslation();
@@ -115,6 +118,18 @@ export function CenterPane() {
 
   // Gutter bar positions
   const [codeBars, setCodeBars] = useState<CodeBar[]>([]);
+
+  // Persisted user-adjustable width for gutter columns
+  const [barWidth, setBarWidth] = useState<number>(() => {
+    const saved = localStorage.getItem(BAR_WIDTH_STORAGE_KEY);
+    const parsed = saved ? parseInt(saved, 10) : NaN;
+    return Number.isFinite(parsed)
+      ? Math.max(MIN_BAR_WIDTH, Math.min(MAX_BAR_WIDTH, parsed))
+      : DEFAULT_BAR_WIDTH;
+  });
+  useEffect(() => {
+    localStorage.setItem(BAR_WIDTH_STORAGE_KEY, String(barWidth));
+  }, [barWidth]);
 
   // Measure code positions after render
   useEffect(() => {
@@ -224,9 +239,39 @@ export function CenterPane() {
   }, [codes, activeFileId, isText, isImage, showGutter]);
 
   const maxColumn = codeBars.length > 0 ? Math.max(...codeBars.map((b) => b.column)) : 0;
+  const columnCount = maxColumn + 1;
   const gutterWidth = showGutter
-    ? (maxColumn + 1) * (BAR_WIDTH + BAR_GAP) + GUTTER_PAD * 2
+    ? columnCount * (barWidth + BAR_GAP) + GUTTER_PAD * 2
     : 0;
+
+  const handleGutterResizeStart = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const startX = e.clientX;
+      const startWidth = barWidth;
+      const cols = Math.max(1, columnCount);
+      const onMove = (ev: MouseEvent) => {
+        const delta = (ev.clientX - startX) / cols;
+        const next = Math.max(
+          MIN_BAR_WIDTH,
+          Math.min(MAX_BAR_WIDTH, startWidth + delta),
+        );
+        setBarWidth(next);
+      };
+      const onUp = () => {
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('mouseup', onUp);
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+      };
+      document.addEventListener('mousemove', onMove);
+      document.addEventListener('mouseup', onUp);
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+    },
+    [barWidth, columnCount],
+  );
 
   const handleMouseUp = useCallback(() => {
     if (!fileContent || !contentRef.current || !isText || !activeFileId) return;
@@ -279,15 +324,14 @@ export function CenterPane() {
     >
       {codeBars.map((bar) => {
         const isSelected = selectedCodeId === bar.codeId;
-        const label = bar.text.length > 7 ? bar.text.slice(0, 7) + '…' : bar.text;
         return (
           <div
             key={bar.codeId}
             className="absolute group/bar"
             style={{
-              left: GUTTER_PAD + bar.column * (BAR_WIDTH + BAR_GAP),
+              left: GUTTER_PAD + bar.column * (barWidth + BAR_GAP),
               top: bar.top,
-              width: BAR_WIDTH,
+              width: barWidth,
               height: bar.height,
             }}
           >
@@ -299,23 +343,30 @@ export function CenterPane() {
               }`}
               style={{ backgroundColor: bar.color }}
             />
-            {/* Code name label */}
+            {/* Code name label (wraps, clipped to the bar's vertical extent) */}
             <div
               onClick={() => setSelectedCodeId(bar.codeId)}
-              className={`absolute left-1 top-0 cursor-pointer select-none truncate rounded px-1 py-px text-[9px] leading-tight font-semibold text-white/90 transition-opacity ${
+              className={`absolute left-1 top-0 cursor-pointer select-none rounded px-1 py-px text-[9px] leading-tight font-semibold text-white/90 transition-opacity whitespace-normal break-all overflow-hidden ${
                 isSelected ? 'opacity-100 ring-1 ring-gray-700 dark:ring-gray-300' : 'opacity-75 hover:opacity-100'
               }`}
               style={{
                 backgroundColor: bar.color,
-                maxWidth: BAR_WIDTH - 6,
+                maxWidth: barWidth - 6,
+                maxHeight: bar.height,
               }}
               title={bar.text}
             >
-              {label}
+              {bar.text}
             </div>
           </div>
         );
       })}
+      {/* Draggable resize handle on the gutter's right edge */}
+      <div
+        onMouseDown={handleGutterResizeStart}
+        className="absolute top-0 right-0 h-full w-1.5 cursor-col-resize hover:bg-violet-400/50 active:bg-violet-500/60 transition-colors"
+        title="Drag to resize"
+      />
     </div>
   );
 
